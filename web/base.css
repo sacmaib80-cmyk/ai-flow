@@ -1,0 +1,354 @@
+/* =========================================================================
+   base.css — เลน Claude: reset + โครง + ตำแหน่ง เท่านั้น
+   ⚠️ ห้ามใส่สี/ฟอนต์/animation ที่นี่ — ของพวกนั้นอยู่ theme.css (เลน Antigravity)
+   ที่นี่มีแค่: box model, grid/flex, ขนาด, ลำดับชั้น (z-index), responsive
+   ========================================================================= */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  min-height: 100vh;
+  overflow: hidden;              /* หน้านี้เป็น dashboard เต็มจอ ไม่เลื่อนทั้งหน้า */
+}
+
+/* ---------- โครงหลัก: แถบบน / ผังสาย / ไทม์ไลน์ขวา ---------- */
+
+#flowRoot {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  grid-template-rows: auto 1fr;
+  grid-template-areas:
+    "bar  bar"
+    "bay  tape";
+  height: 100vh;
+  width: 100%;
+}
+
+.rig-bar {
+  grid-area: bar;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 18px;
+  flex-wrap: wrap;
+}
+
+.rig-id { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+.rig-dot { width: 9px; height: 9px; flex: none; align-self: center; }
+.rig-meta { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+
+/* ---------- ผังสาย ---------- */
+
+.patchbay {
+  grid-area: bay;
+  position: relative;
+  overflow: hidden;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* เส้นสายวาดเต็มพื้นที่ อยู่ใต้โหนด */
+.wires {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* ศูนย์กลาง */
+.hub {
+  position: absolute;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  transform: translate(-50%, -50%);
+  /* ตำแหน่งจริง (left/top) ถูก set โดย app.js ตามขนาดจอ */
+}
+
+.nodes {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;         /* ให้เฉพาะการ์ดรับคลิก ไม่ใช่ทั้งชั้น */
+}
+
+/* ป้ายบอกขั้นของการไหล (จุดชนวน → ตัวกลาง → ทำงาน → ปลายทาง) */
+.stage-labels {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+.stage {
+  position: absolute;
+  top: 14px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+.stage[data-col="0"] { left: 11%; }
+.stage[data-col="1"] { left: 37%; }
+.stage[data-col="2"] { left: 63%; }
+.stage[data-col="3"] { left: 89%; }
+
+/* จุดแวะที่ไม่ใช่ "สาย" — claude-cli / d:\git / มือถือ
+   position/transform = โครงสร้าง (JS set left/top) ห้าม override ดู comment ที่ .node */
+.waypoint {
+  position: absolute !important;
+  transform: translate(-50%, -50%);
+  transition-property: border-color, background-color, box-shadow, opacity, color;
+  padding: 7px 11px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 2;
+}
+.wp-name { line-height: 1.2; }
+.wp-sub { line-height: 1.2; }
+
+/* คำอธิบายเส้น — อยู่แถบล่างเต็มความกว้าง ไม่ทับการ์ด
+   (เดิมลอยมุมซ้ายล่างแล้วทับการ์ด Claude Code จริง) */
+.legend {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 4;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 18px;
+  padding: 7px 16px;
+  pointer-events: none;
+}
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.legend-item::before {
+  content: "";
+  width: 18px;
+  height: 0;
+  flex: none;
+  border-top-width: 2px;
+  border-top-style: solid;
+}
+
+/* ⚠️ ตำแหน่งของ .node / .waypoint เป็น "โครงสร้าง" ไม่ใช่สไตล์ —
+   JS set left/top เป็นพิกัดสัมบูรณ์ตาม layout ของผัง
+   ถ้าใครไป override position เป็น relative/static การ์ดจะหลุดไปเรียงเป็นตับ
+   แล้วเส้นจะชี้ไปที่ว่างเปล่า (เคยพังมาแล้วจริง — theme.css ใส่ position:relative
+   เพื่อจะห้อย ::before แล้วผังพังทั้งหน้า)
+   → บังคับด้วย !important ตรงนี้ ให้ธีมยังตกแต่งส่วนอื่นได้อิสระ
+   ถ้าจะห้อย pseudo-element: ทำได้เลย ไม่ต้องตั้ง position เพราะ absolute
+   ก็เป็น containing block ให้ ::before/::after อยู่แล้ว */
+/* ขนาดการ์ดตามความสำคัญ (tier) — โครงสร้าง ไม่ใช่สไตล์
+   tier1 = agent เต็มตัว (ใหญ่/หนักแน่น) · tier2 = ผู้ช่วย · tier3 = ท่อ (เล็กสุด)
+   สี/เงา/ความทึบ ปล่อยให้ theme.css จัดการต่อ */
+.node[data-tier="1"] { width: 216px; padding: 11px 13px; }
+.node[data-tier="2"] { width: 186px; padding: 8px 11px; }
+.node[data-tier="3"] { width: 164px; padding: 7px 10px; }
+.node[data-tier="3"] .node-stat { font-size: 11px; }
+
+.node {
+  position: absolute !important;
+  width: 210px;
+  padding: 10px 12px;
+  transform: translate(-50%, -50%);
+  z-index: 3;                   /* อยู่เหนือเส้น ไม่ให้เส้นพาดทับตัวหนังสือ */
+  pointer-events: auto;
+  /* กัน transition:all ของธีมมาทำให้การ์ด "ไหล" ตอน re-render/resize */
+  transition-property: border-color, background-color, box-shadow, opacity, color;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  /* left/top ถูก set โดย app.js */
+}
+
+.node-head { display: flex; align-items: center; gap: 8px; }
+.node-icon { width: 16px; height: 16px; flex: none; }
+.node-name { margin: 0; font-size: 13px; line-height: 1.2; }
+.node-state { margin-left: auto; flex: none; }
+.node-sub, .node-stat, .node-stat2 { margin: 0; line-height: 1.35; }
+.node-age { margin: 0; }
+
+/* ---------- ไทม์ไลน์ ---------- */
+
+.tape {
+  grid-area: tape;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.tape-head { margin: 0; padding: 12px 14px 8px; font-size: 12px; }
+
+/* แท็บ เหตุการณ์ / ที่พัง */
+.tape-tabs { display: flex; flex: none; }
+.tape-tab {
+  flex: 1;
+  padding: 10px 8px;
+  cursor: pointer;
+  font: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.tab-badge {
+  min-width: 17px;
+  padding: 1px 5px;
+  border-radius: 9px;
+  font-size: 10px;
+  line-height: 1.4;
+}
+.tab-badge[hidden] { display: none; }
+
+.tape-list {
+  margin: 0;
+  padding: 0 0 10px;
+  list-style: none;
+  overflow-y: auto;
+  min-height: 0;
+  flex: 1;
+}
+.tape-list[hidden] { display: none; }
+
+.tape-empty { padding: 18px 14px; }
+
+/* แถวที่พัง: ข้อความยาว ให้ตัดบรรทัดได้ */
+.err-row .tape-text { line-height: 1.45; }
+.err-where { display: block; }
+.err-count { font-style: normal; }
+
+/* ภาระเครื่อง (ล่างสุดของแถบขวา) */
+.vitals {
+  flex: none;
+  padding: 10px 14px 12px;
+}
+.vitals-head { margin: 0 0 8px; font-size: 11px; }
+.vital-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  padding: 2px 0;
+}
+/* แถบ RAM 2 ชั้นซ้อน: ชั้นล่าง = ใช้ทั้งเครื่อง · ชั้นบน = เฉพาะส่วนที่เป็น AI */
+.vital-bar {
+  position: relative;
+  height: 6px;
+  margin: 6px 0 7px;
+  overflow: hidden;
+}
+.vital-fill {
+  position: absolute;
+  left: 0; top: 0;
+  display: block;
+  height: 100%;
+  width: 0;
+}
+.vital-fill--ai { height: 100%; }
+.vital-row--sub { padding-left: 8px; }
+.vital-tools {
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px 10px;
+}
+
+/* เปิดค้างอยู่ตอนนี้ */
+.run-list { margin: 0; padding: 0; list-style: none; }
+.run-row {
+  display: grid;
+  grid-template-columns: 8px 1fr auto;
+  align-items: center;
+  gap: 7px;
+  padding: 2px 0;
+}
+.run-dot { width: 5px; height: 5px; border-radius: 50%; }
+.run-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.run-empty { padding: 4px 0; }
+
+.tape-row {
+  display: grid;
+  grid-template-columns: 58px 1fr;
+  gap: 8px;
+  padding: 5px 14px;
+  align-items: baseline;
+}
+
+.tape-time { font-variant-numeric: tabular-nums; }
+.tape-text { min-width: 0; overflow-wrap: anywhere; }
+
+/* ---------- แผงรายละเอียด ---------- */
+
+.detail {
+  position: fixed;
+  right: 336px;
+  bottom: 16px;
+  width: 340px;
+  max-height: 60vh;
+  overflow-y: auto;
+  z-index: 20;
+  padding: 16px;
+}
+.detail[hidden] { display: none; }
+
+.detail-close {
+  position: absolute;
+  top: 8px; right: 10px;
+  width: 28px; height: 28px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.detail-title { margin: 0 0 2px; font-size: 15px; }
+.detail-sub { margin: 0 0 12px; }
+.detail-stats { margin: 0 0 12px; display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; }
+.detail-stats dt, .detail-stats dd { margin: 0; }
+.detail-feed { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.detail-feed li { overflow-wrap: anywhere; }
+
+.conn-warn {
+  position: fixed;
+  left: 50%; bottom: 18px;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 8px 16px;
+  z-index: 30;
+}
+.conn-warn[hidden] { display: none; }
+
+/* ---------- จอแคบ: ผังสายอยู่บน ไทม์ไลน์ลงล่าง ---------- */
+
+@media (max-width: 900px) {
+  body { overflow: auto; }
+  #flowRoot {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(420px, 58vh) 1fr;
+    grid-template-areas: "bar" "bay" "tape";
+    height: auto;
+    min-height: 100vh;
+  }
+  .detail { right: 12px; left: 12px; width: auto; }
+}

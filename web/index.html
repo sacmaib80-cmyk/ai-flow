@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI Flow — เส้นสายระบบอัตโนมัติ</title>
+<link rel="stylesheet" href="base.css">
+<link rel="stylesheet" href="patchbay.css">
+<link rel="stylesheet" href="theme.css">
+</head>
+<body>
+
+<div id="flowRoot" data-live="false">
+
+  <!-- แถบบน: สถานะเครื่อง -->
+  <header class="rig-bar">
+    <div class="rig-id">
+      <span class="rig-dot" data-conn="off"></span>
+      <span class="rig-name">AI&nbsp;FLOW</span>
+      <span class="rig-sub">เส้นสายระบบอัตโนมัติในเครื่อง</span>
+    </div>
+    <div class="rig-meta">
+      <span class="rig-count"><b id="statLive">0</b> สายมีสัญญาณ</span>
+      <span class="rig-count"><b id="statArmed">0</b> ตั้งรออยู่</span>
+      <span class="rig-count rig-count--dead"><b id="statDead">0</b> ตาย</span>
+      <button class="rig-plug" id="pbOpen" type="button">
+        ปลั๊กสกิล <span class="tab-badge" id="pbCount" hidden>0</span>
+      </button>
+      <time class="rig-clock" id="rigClock">--:--:--</time>
+    </div>
+  </header>
+
+  <main class="patchbay">
+
+    <!-- ชั้นเส้นสาย: Claude วาด path/pulse ลงไปด้วย JS -->
+    <svg class="wires" id="wires" aria-hidden="true">
+      <defs>
+        <!-- หัวลูกศรบอกทิศทางการไหล (สีตามเส้นผ่าน context-stroke) -->
+        <marker id="arrowHead" viewBox="0 0 8 8" refX="7" refY="4"
+                markerWidth="7" markerHeight="7" orient="auto-start-reverse"
+                markerUnits="userSpaceOnUse">
+          <path d="M0.5 0.8 L7 4 L0.5 7.2 Z" fill="context-stroke"/>
+        </marker>
+      </defs>
+    </svg>
+
+    <!-- ป้ายคอลัมน์: บอกว่างานไหลจากซ้ายไปขวา -->
+    <div class="stage-labels" aria-hidden="true">
+      <span class="stage" data-col="0">จุดชนวน</span>
+      <span class="stage" data-col="1">ตัวกลาง</span>
+      <span class="stage" data-col="2">ทำงาน / ส่งออก</span>
+      <span class="stage" data-col="3">ปลายทาง</span>
+    </div>
+
+    <!-- ศูนย์กลาง = เครื่องของ user (ซ่อนไว้ ใช้ gateway เป็นตัวกลางจริงแทน) -->
+    <div class="hub" id="hub" hidden>
+      <span class="hub-label">เครื่องนี้</span>
+      <span class="hub-host" id="hubHost">—</span>
+    </div>
+
+    <!-- โหนดแต่ละสาย: JS เติมเข้ามา -->
+    <div class="nodes" id="nodes"></div>
+
+    <!-- คำอธิบายเส้น: ไม่งั้นดูไม่ออกว่าเส้นสว่าง/จาง/แดง แปลว่าอะไร -->
+    <div class="legend" aria-hidden="true">
+      <span class="legend-item" data-flow="flowing">มีงานวิ่งอยู่</span>
+      <span class="legend-item" data-flow="quiet">เคยวิ่ง ตอนนี้เงียบ</span>
+      <span class="legend-item" data-flow="error">ส่งไม่สำเร็จ</span>
+      <span class="legend-item" data-flow="never">ยังไม่เคยวิ่ง</span>
+      <span class="legend-item" data-inferred="true">เส้นที่อนุมาน (ยังไม่มี log ยืนยัน)</span>
+    </div>
+
+  </main>
+
+  <!-- ไทม์ไลน์ / รายการที่พัง -->
+  <aside class="tape">
+    <div class="tape-tabs" role="tablist">
+      <button class="tape-tab is-on" id="tabEvents" type="button" role="tab" aria-selected="true">เหตุการณ์</button>
+      <button class="tape-tab" id="tabErrors" type="button" role="tab" aria-selected="false">
+        ที่พัง <span class="tab-badge" id="errBadge" hidden>0</span>
+      </button>
+    </div>
+
+    <ol class="tape-list" id="tapeList"></ol>
+
+    <ol class="tape-list err-list" id="errList" hidden></ol>
+
+    <!-- สุขภาพเครื่อง: RAM / token / ดิสก์ -->
+    <section class="vitals" id="vitals">
+      <h3 class="vitals-head">ภาระเครื่อง</h3>
+      <div class="vital-row">
+        <span class="vital-k">RAM เครื่อง (ใช้ไป)</span>
+        <span class="vital-v" id="vRam">—</span>
+      </div>
+      <!-- แถบ 2 ชั้น: ชั้นล่าง = ที่ใช้ทั้งเครื่อง · ชั้นบนทึบ = ส่วนที่เป็น AI -->
+      <div class="vital-bar">
+        <span class="vital-fill" id="vRamFill"></span>
+        <span class="vital-fill vital-fill--ai" id="vAiFill"></span>
+      </div>
+      <div class="vital-row vital-row--sub">
+        <span class="vital-k">เหลือว่าง</span>
+        <span class="vital-v" id="vFree">—</span>
+      </div>
+      <div class="vital-row vital-row--sub">
+        <span class="vital-k">ในนั้นเป็น AI</span>
+        <span class="vital-v" id="vAi">—</span>
+      </div>
+      <ul class="vital-tools" id="vTools"></ul>
+      <div class="vital-row">
+        <span class="vital-k">Token รอบนี้</span>
+        <span class="vital-v" id="vTok">—</span>
+      </div>
+      <div class="vital-row">
+        <span class="vital-k">พื้นที่ที่ AI เก็บ</span>
+        <span class="vital-v" id="vDisk">—</span>
+      </div>
+      <ul class="vital-tools vital-disk" id="vDiskList"></ul>
+
+      <h3 class="vitals-head vitals-head--sep">เปิดค้างอยู่ตอนนี้</h3>
+      <ul class="run-list" id="runList"></ul>
+    </section>
+  </aside>
+
+  <!-- แผงรายละเอียดตอนคลิกโหนด -->
+  <section class="detail" id="detail" hidden aria-live="polite">
+    <button class="detail-close" id="detailClose" type="button" aria-label="ปิด">×</button>
+    <h2 class="detail-title" id="detailTitle"></h2>
+    <p class="detail-sub" id="detailSub"></p>
+    <dl class="detail-stats" id="detailStats"></dl>
+    <ul class="detail-feed" id="detailFeed"></ul>
+  </section>
+
+  <p class="conn-warn" id="connWarn" hidden>ขาดการเชื่อมต่อกับ server — กำลังต่อใหม่…</p>
+
+  <!-- ===== แผงปลั๊กสกิล: ลากสกิลไปเสียบให้ AI แต่ละตัวถูกบังคับให้อ่าน ===== -->
+  <div class="pb-panel" id="pbPanel" hidden data-open="false">
+    <div class="pb-sheet" role="dialog" aria-label="แผงปลั๊กสกิล">
+
+      <header class="pb-head">
+        <div class="pb-head-id">
+          <h2 class="pb-title">แผงปลั๊กสกิล</h2>
+          <p class="pb-sub">เสียบแล้ว AI ตัวนั้นต้องอ่านสกิลก่อนเริ่มงาน — ไม่ใช่คำแนะนำ เป็นข้อบังคับ</p>
+        </div>
+        <label class="pb-job">
+          <span class="pb-job-label">งานตอนนี้</span>
+          <input type="text" id="pbJobTitle" class="pb-job-input" placeholder="เช่น ทำ UI หน้า checkout" maxlength="200">
+        </label>
+        <button class="pb-close" id="pbClose" type="button" aria-label="ปิด">×</button>
+      </header>
+
+      <!-- บรีฟรวม: พิมพ์ครั้งเดียว ทุกสายได้เหมือนกัน (ยกเว้นบรรทัดหน้าที่ของตัวเอง) -->
+      <section class="pb-brief">
+        <div class="pb-brief-head">
+          <span class="pb-brief-k">บรีฟงาน — ทุกตัวได้อ่านเหมือนกัน</span>
+          <span class="pb-brief-count" id="pbBriefCount">0</span>
+        </div>
+        <textarea id="pbBrief" class="pb-brief-input" rows="3"
+          placeholder="พิมพ์ที่นี่ครั้งเดียว ทุกสายรู้พร้อมกัน — เช่น: เกมยังแล็กตอนบอท 8 ตัว · ห้ามแตะ theme.css (เลนคนอื่น) · อย่าเดา ให้วัดก่อน"></textarea>
+        <div class="pb-brief-actions">
+          <button class="pb-send" id="pbSend" type="button">ส่งให้ทุกตัวเดี๋ยวนี้</button>
+          <button class="pb-end" id="pbEnd" type="button">จบงาน</button>
+          <span class="pb-live" id="pbLive" data-on="false">ยังไม่ได้ส่งงาน</span>
+          <a class="pb-anti-link" id="pbAntiLink" href="/anti" target="_blank" rel="noopener">ลิงก์บรีฟของ Antigravity ↗</a>
+        </div>
+        <p class="pb-brief-note">
+          หน้าที่รายตัวใส่ในช่องของแต่ละสายข้างล่าง — ทุกตัวจะเห็น<strong>ผังทีมทั้งหมด</strong> ไม่ใช่เห็นแค่ของตัวเอง
+          (พิมพ์แล้วมันเซฟเองอยู่แล้ว ปุ่มนี้ไว้สั่งส่งทันทีตอนไม่อยากรอ)
+        </p>
+      </section>
+
+      <div class="pb-body" id="pbBody">
+        <!-- สายที่ลากจากชั้นวางไปยังช่องที่เสียบ (วาดโดย patchbay.js) -->
+        <svg class="pb-cables" id="pbCables" aria-hidden="true" preserveAspectRatio="none"></svg>
+
+        <section class="pb-rack-wrap">
+          <div class="pb-rack-head">
+            <h3 class="pb-col-title">ชั้นวางสกิล</h3>
+            <input type="search" id="pbSearch" class="pb-search" placeholder="ค้นหาไทยก็ได้ เช่น ดีไซน์…" aria-label="ค้นหาสกิล">
+          </div>
+          <div class="pb-rack" id="pbRack"></div>
+        </section>
+
+        <section class="pb-socket-wrap">
+          <div class="pb-rack-head">
+            <h3 class="pb-col-title">ช่องเสียบของแต่ละสาย</h3>
+            <button class="pb-clear" id="pbClear" type="button">ถอดทั้งหมด</button>
+          </div>
+          <div class="pb-sockets" id="pbSockets"></div>
+        </section>
+      </div>
+
+      <footer class="pb-foot">
+        <div class="pb-budget">
+          <div class="pb-budget-bar"><span class="pb-budget-fill" id="pbBudgetFill" data-over="false"></span></div>
+          <span class="pb-budget-text" id="pbBudgetText">ยังไม่ได้เสียบอะไร</span>
+          <span class="pb-budget-warn" id="pbBudgetWarn" hidden>เกินเพดาน — ส่วนเกินจะถูกตัดแล้วชี้ path แทน</span>
+        </div>
+        <p class="pb-status" id="pbStatus" data-kind="idle">ลากสกิลจากซ้ายมาเสียบช่องขวา</p>
+      </footer>
+
+    </div>
+  </div>
+
+</div>
+
+<script src="app.js"></script>
+<script src="patchbay.js"></script>
+</body>
+</html>

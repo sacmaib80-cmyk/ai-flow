@@ -1,0 +1,611 @@
+/* =========================================================================
+   patchbay.css — แผงปลั๊กสกิล (เลน Claude)
+
+   ⚠️ หมายเหตุเรื่องเลน: ปกติสี/animation เป็นของ theme.css (เลน Antigravity)
+   แต่แผงนี้เป็นของใหม่ที่ theme.css ยังไม่รู้จัก ถ้าไม่ใส่สีเลยจะมองไม่เห็นอะไร
+   → ใส่ไว้เป็น "ค่าตั้งต้นที่ทับได้" ทุกค่าผ่านตัวแปร --pb-* ให้ theme.css
+     override ทีหลังได้โดยไม่ต้องแก้ไฟล์นี้ (Anti: เขียนทับใน theme.css ได้เลย)
+
+   สีประจำสาย = ความหมาย ไม่ใช่ของประดับ (ตรงกับสีในผังหลัก)
+   ========================================================================= */
+
+:root {
+  --pb-bg:        #0B0E11;
+  --pb-panel:     #12171C;
+  --pb-line:      #212A32;
+  --pb-ink:       #E6EDF3;
+  --pb-dim:       #8B9AA7;
+  --pb-ok:        #43D9A3;
+  --pb-warn:      #E8A33D;
+  --pb-fail:      #D9614C;
+
+  --pb-job:         #EDE7DA;
+  --pb-claude:      #E8A33D;
+  --pb-codex:       #8FB8FF;
+  --pb-openclaw:    #43D9A3;
+  --pb-antigravity: #C77DD9;
+}
+
+/* ---------- ปุ่มเปิดบนแถบหัว ---------- */
+
+/* ⚠️ ปุ่มนี้ต้อง "ดูเป็นปุ่ม" ชัดเจน
+   เวอร์ชันแรกใช้ขอบ #212A32 บนพื้นเกือบดำ + user ย่อจอ 70% → มองไม่เห็นว่าเป็นปุ่ม
+   เลยไม่มีใครกด แล้วสรุปกันว่า "ฟีเจอร์ไม่ขึ้น" */
+.rig-plug {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 14px;
+  border: 1px solid var(--pb-claude);
+  border-radius: 999px;
+  background: rgba(232, 163, 61, .12);
+  color: var(--pb-claude);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  cursor: pointer;
+  box-shadow: 0 0 0 3px rgba(232, 163, 61, .07);
+}
+.rig-plug::before {
+  content: "";
+  width: 9px;
+  height: 9px;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+}
+.rig-plug:hover { background: rgba(232, 163, 61, .24); }
+.rig-plug:active { transform: translateY(1px); }
+
+/* ---------- ฉาก ---------- */
+
+.pb-panel {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(4, 6, 8, .72);
+}
+.pb-panel[hidden] { display: none; }
+
+.pb-sheet {
+  display: flex;
+  flex-direction: column;
+  width: min(1180px, 100%);
+  height: min(760px, 100%);
+  min-height: 0;
+  border: 1px solid var(--pb-line);
+  border-radius: 10px;
+  background: var(--pb-panel);
+  color: var(--pb-ink);
+  overflow: hidden;
+}
+
+/* ---------- หัว ---------- */
+
+.pb-head {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--pb-line);
+  flex: none;
+}
+.pb-head-id { min-width: 0; flex: 1; }
+.pb-title { margin: 0; font-size: 15px; letter-spacing: .06em; text-transform: uppercase; }
+.pb-sub { margin: 3px 0 0; font-size: 12px; color: var(--pb-dim); }
+
+.pb-job { display: flex; flex-direction: column; gap: 3px; flex: none; }
+.pb-job-label { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--pb-dim); }
+.pb-job-input {
+  width: 260px;
+  padding: 6px 10px;
+  border: 1px solid var(--pb-line);
+  border-radius: 5px;
+  background: var(--pb-bg);
+  color: var(--pb-ink);
+  font: inherit;
+  font-size: 13px;
+}
+.pb-job-input:focus { outline: none; border-color: var(--pb-claude); }
+
+/* ---- บรีฟรวม: พิมพ์ครั้งเดียว ทุกสายได้เหมือนกัน ---------------------- */
+
+.pb-brief {
+  flex: none;
+  padding: 12px 18px 14px;
+  border-bottom: 1px solid var(--pb-line);
+  background: linear-gradient(180deg, rgba(255, 255, 255, .022), transparent);
+}
+.pb-brief-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 6px; }
+.pb-brief-k {
+  font-size: 10px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--pb-dim);
+}
+.pb-brief-count {
+  margin-left: auto;
+  font: 11px/1 ui-monospace, Consolas, monospace;
+  color: var(--pb-dim);
+}
+.pb-brief-count[data-over="true"] { color: var(--pb-fail); }
+
+.pb-brief-input {
+  display: block;
+  width: 100%;
+  resize: vertical;
+  /* 3 บรรทัดเต็มพอดี (13px × 1.55 ≈ 20px/บรรทัด + padding + border)
+     ถ้าตั้งเตี้ยกว่านี้ บรรทัดที่ 3 จะถูกตัดครึ่ง = ดูเหมือนพัง */
+  min-height: 82px;
+  padding: 9px 11px;
+  border: 1px solid var(--pb-line);
+  border-radius: 7px;
+  background: var(--pb-bg);
+  color: var(--pb-ink);
+  font: 13px/1.55 inherit;
+}
+.pb-brief-input::placeholder { color: var(--pb-dim); opacity: .75; }
+.pb-brief-input:focus { outline: none; border-color: var(--pb-job); }
+
+.pb-brief-actions {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 9px;
+  margin-top: 9px;
+}
+.pb-send {
+  padding: 7px 15px;
+  border: 0;
+  border-radius: 7px;
+  background: var(--pb-job);
+  color: #14161A;
+  font: 600 12.5px/1 inherit;
+  cursor: pointer;
+}
+.pb-send:active { transform: translateY(1px); }
+.pb-end {
+  padding: 7px 13px;
+  border: 1px solid var(--pb-line);
+  border-radius: 7px;
+  background: transparent;
+  color: var(--pb-dim);
+  font: 12.5px/1 inherit;
+  cursor: pointer;
+}
+.pb-end:hover { color: var(--pb-ink); border-color: var(--pb-dim); }
+.pb-end[data-confirm="1"] { border-color: var(--pb-fail); color: var(--pb-fail); }
+
+/* ไฟบอกว่ากำลังบังคับสายไหนอยู่ — อ่านจากไฟล์จริง ไม่ใช่จากช่องที่พิมพ์ */
+.pb-live {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11px;
+  color: var(--pb-dim);
+}
+.pb-live::before {
+  content: "";
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--pb-line);
+}
+.pb-live[data-on="true"] { color: var(--pb-ok); }
+.pb-live[data-on="true"]::before {
+  background: var(--pb-ok);
+  box-shadow: 0 0 7px var(--pb-ok);
+}
+
+.pb-brief-note {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+  margin: 7px 0 0;
+  font-size: 11px; line-height: 1.45; color: var(--pb-dim);
+}
+.pb-brief-note strong { color: var(--pb-ink); font-weight: 600; }
+.pb-anti-link {
+  margin-left: auto;
+  padding: 3px 9px;
+  border: 1px solid var(--pb-antigravity);
+  border-radius: 999px;
+  color: var(--pb-antigravity);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.pb-anti-link:hover { background: rgba(199, 125, 217, .12); }
+
+/* ---- ช่องหน้าที่รายตัว ------------------------------------------------- */
+
+/* ลำดับงาน + ธงผู้คุมงาน (บนหัวช่องแต่ละสาย) */
+.pb-order {
+  flex: none;
+  width: 34px;
+  padding: 2px 4px;
+  border: 1px solid var(--pb-line);
+  border-radius: 5px;
+  background: var(--pb-bg);
+  color: var(--pb-ink);
+  font: 600 11px/1.2 ui-monospace, Consolas, monospace;
+  text-align: center;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+.pb-order::-webkit-outer-spin-button,
+.pb-order::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.pb-order:focus { outline: none; border-color: var(--pb-job); }
+.pb-order:not(:placeholder-shown) { border-color: var(--pb-job); color: var(--pb-job); }
+
+.pb-lead {
+  flex: none;
+  padding: 2px 8px;
+  border: 1px solid var(--pb-line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--pb-dim);
+  font: 9.5px/1.5 inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.pb-lead:hover { color: var(--pb-ink); }
+.pb-lead[data-on="true"] {
+  border-color: var(--pb-claude);
+  background: rgba(232, 163, 61, .16);
+  color: var(--pb-claude);
+}
+
+.pb-flow {
+  flex: 1 0 100%;
+  margin: 0;
+  font: 11px/1.5 ui-monospace, Consolas, monospace;
+  color: var(--pb-dim);
+}
+.pb-flow b { color: var(--pb-job); font-weight: 600; }
+
+.pb-role {
+  display: block;
+  width: 100%;
+  margin: 0 0 8px;
+  padding: 6px 9px;
+  border: 1px dashed var(--pb-line);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--pb-ink);
+  font: 12px/1.4 inherit;
+}
+.pb-role::placeholder { color: var(--pb-dim); opacity: .7; }
+.pb-role:focus {
+  outline: none;
+  border-style: solid;
+  border-color: var(--pb-claude);
+  background: var(--pb-bg);
+}
+/* กรอกแล้วให้เห็นชัดว่า "สายนี้มีหน้าที่แล้ว" แม้ยังไม่ได้เสียบสกิลอะไรเลย */
+.pb-role:not(:placeholder-shown) { border-style: solid; border-color: rgba(255, 255, 255, .16); }
+.pb-socket[data-agent="claude"] .pb-role:focus { border-color: var(--pb-claude); }
+.pb-socket[data-agent="codex"] .pb-role:focus { border-color: var(--pb-codex); }
+.pb-socket[data-agent="openclaw"] .pb-role:focus { border-color: var(--pb-openclaw); }
+.pb-socket[data-agent="antigravity"] .pb-role:focus { border-color: var(--pb-antigravity); }
+
+.pb-close {
+  flex: none;
+  width: 30px; height: 30px;
+  border: 1px solid var(--pb-line);
+  border-radius: 5px;
+  background: transparent;
+  color: var(--pb-dim);
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
+}
+.pb-close:hover { color: var(--pb-ink); border-color: var(--pb-ink); }
+
+/* ---------- ตัวแผง: 2 คอลัมน์ + ชั้นสายคลุมทับ ---------- */
+
+.pb-body {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 1fr 1.05fr;
+  gap: 0;
+}
+.pb-body[data-dragging="true"] { cursor: grabbing; -webkit-user-select: none; user-select: none; }
+
+.pb-cables {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 5;
+  pointer-events: none;      /* สายเป็นภาพ ห้ามขวางการคลิก */
+  overflow: hidden;          /* ห้ามสายวิ่งทะลุออกนอกแผง (เคยหลุดไปพาดทับผังข้างหลัง) */
+}
+
+.pb-cable {
+  fill: none;
+  stroke: var(--pb-job);
+  stroke-width: 2;
+  stroke-linecap: round;
+  opacity: .85;
+}
+.pb-cable[data-agent="claude"]      { stroke: var(--pb-claude); }
+.pb-cable[data-agent="codex"]       { stroke: var(--pb-codex); }
+.pb-cable[data-agent="openclaw"]    { stroke: var(--pb-openclaw); }
+.pb-cable[data-agent="antigravity"] { stroke: var(--pb-antigravity); }
+.pb-cable--live { stroke-dasharray: 5 5; opacity: 1; }
+/* สกิลถูกเลื่อนพ้นกรอบชั้นวาง — ยังต่ออยู่ แค่มองไม่เห็นหัวปลั๊ก */
+.pb-cable[data-offscreen="true"] { opacity: .3; stroke-dasharray: 2 6; }
+
+.pb-chip--inherit { opacity: .62; border-style: dashed; padding-right: 9px; }
+
+.pb-rack-wrap,
+.pb-socket-wrap {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  padding: 14px 16px;
+}
+.pb-socket-wrap { border-left: 1px solid var(--pb-line); }
+
+.pb-rack-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+  flex: none;
+}
+.pb-col-title {
+  margin: 0;
+  font-size: 10px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--pb-dim);
+}
+.pb-search, .pb-clear {
+  padding: 5px 10px;
+  border: 1px solid var(--pb-line);
+  border-radius: 5px;
+  background: var(--pb-bg);
+  color: var(--pb-ink);
+  font: inherit;
+  font-size: 12px;
+}
+.pb-search { width: 150px; }
+.pb-search:focus { outline: none; border-color: var(--pb-claude); }
+.pb-clear { cursor: pointer; color: var(--pb-dim); }
+.pb-clear:hover { color: var(--pb-fail); border-color: var(--pb-fail); }
+
+/* ---------- ชั้นวางสกิล ---------- */
+
+.pb-rack { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+
+.pb-jack {
+  position: relative;
+  z-index: 6;
+  padding: 8px 10px;
+  border: 1px solid var(--pb-line);
+  border-radius: 6px;
+  background: var(--pb-bg);
+  cursor: grab;
+  touch-action: none;              /* ต้องมี ไม่งั้น pointermove โดน scroll ฮุบบนจอสัมผัส */
+}
+.pb-jack:hover { border-color: var(--pb-claude); }
+.pb-jack[data-plugged="true"] { border-color: var(--pb-ok); }
+
+.pb-jack-head { display: flex; align-items: baseline; gap: 8px; }
+.pb-jack-plug {
+  width: 8px; height: 8px;
+  flex: none;
+  border-radius: 50%;
+  border: 1.5px solid var(--pb-dim);
+  align-self: center;
+}
+.pb-jack[data-plugged="true"] .pb-jack-plug { background: var(--pb-ok); border-color: var(--pb-ok); }
+.pb-jack-name { font-size: 13px; font-weight: 600; }
+.pb-jack-src {
+  padding: 1px 6px;
+  border: 1px solid currentColor;
+  border-radius: 3px;
+  font-size: 9px;
+  letter-spacing: .06em;
+  opacity: .8;
+}
+.pb-jack-src[data-src="repo"]  { color: var(--pb-openclaw); }
+.pb-jack-src[data-src="codex"] { color: var(--pb-codex); }
+
+.pb-jack-size {
+  margin-left: auto;
+  font-size: 10px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--pb-dim);
+  white-space: nowrap;
+}
+/* ป้าย "ใช้บ่อย" — ตัวที่เกี่ยวกับงานจริงในเครื่องนี้ เรียงขึ้นก่อนอยู่แล้ว */
+.pb-jack-star {
+  flex: none;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(232, 163, 61, .16);
+  color: var(--pb-claude);
+  font-size: 9.5px;
+  letter-spacing: .04em;
+  white-space: nowrap;
+}
+.pb-jack-tag {
+  flex: none;
+  padding: 1px 6px;
+  border: 1px solid var(--pb-line);
+  border-radius: 999px;
+  color: var(--pb-dim);
+  font-size: 9.5px;
+  white-space: nowrap;
+}
+/* id อังกฤษ — ยังต้องเห็นเพราะเป็นชื่อจริงที่ใช้อ้างถึงไฟล์/คุยกับ AI */
+.pb-jack-id {
+  display: block;
+  margin: 3px 0 0;
+  font: 10.5px/1.3 ui-monospace, Consolas, monospace;
+  color: var(--pb-dim);
+  opacity: .72;
+}
+.pb-jack-desc { margin: 4px 0 0; font-size: 11.5px; line-height: 1.5; color: var(--pb-ink); opacity: .82; }
+.pb-jack-use {
+  margin: 5px 0 0;
+  padding-left: 7px;
+  border-left: 2px solid var(--pb-line);
+  font-size: 10.5px;
+  line-height: 1.45;
+  color: var(--pb-dim);
+}
+.pb-jack-warn { display: inline-block; margin-top: 4px; font-size: 10px; color: var(--pb-warn); }
+.pb-empty { margin: 12px 2px; font-size: 12px; color: var(--pb-dim); }
+
+/* ---------- ช่องเสียบ ---------- */
+
+.pb-sockets { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+
+.pb-socket {
+  position: relative;
+  z-index: 6;
+  padding: 10px 12px;
+  border: 1px solid var(--pb-line);
+  border-left: 3px solid var(--pb-line);
+  border-radius: 6px;
+  background: var(--pb-bg);
+}
+.pb-socket[data-agent="job"]         { border-left-color: var(--pb-job); }
+.pb-socket[data-agent="claude"]      { border-left-color: var(--pb-claude); }
+.pb-socket[data-agent="codex"]       { border-left-color: var(--pb-codex); }
+.pb-socket[data-agent="openclaw"]    { border-left-color: var(--pb-openclaw); }
+.pb-socket[data-agent="antigravity"] { border-left-color: var(--pb-antigravity); }
+.pb-socket[data-drop="true"] { border-color: var(--pb-ok); background: #101A16; }
+
+.pb-socket-head { display: flex; align-items: center; gap: 8px; }
+.pb-lamp {
+  width: 7px; height: 7px;
+  flex: none;
+  border-radius: 50%;
+  background: #2A343D;
+}
+.pb-socket[data-verify="ok"]   .pb-lamp { background: var(--pb-ok); }
+.pb-socket[data-verify="warn"] .pb-lamp { background: var(--pb-warn); }
+.pb-socket[data-verify="fail"] .pb-lamp { background: var(--pb-fail); }
+
+.pb-socket-title { margin: 0; font-size: 13px; font-weight: 600; }
+.pb-socket-cost {
+  margin-left: auto;
+  font-size: 10px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--pb-dim);
+}
+.pb-socket-note { margin: 4px 0 8px; font-size: 11px; line-height: 1.45; color: var(--pb-dim); }
+
+.pb-slots { display: flex; flex-wrap: wrap; gap: 5px; min-height: 26px; align-items: center; }
+.pb-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 4px 3px 9px;
+  border: 1px solid var(--pb-line);
+  border-radius: 999px;
+  background: var(--pb-panel);
+  font-size: 11px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.pb-chip-x {
+  width: 16px; height: 16px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--pb-dim);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+}
+.pb-chip-x:hover { color: var(--pb-fail); }
+.pb-hole {
+  font-size: 11px;
+  color: #4A5762;
+  border: 1px dashed var(--pb-line);
+  border-radius: 999px;
+  padding: 3px 10px;
+}
+
+.pb-copy {
+  margin-top: 8px;
+  padding: 5px 10px;
+  border: 1px solid var(--pb-antigravity);
+  border-radius: 5px;
+  background: transparent;
+  color: var(--pb-antigravity);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+.pb-copy:hover { background: rgba(199, 125, 217, .12); }
+
+/* ---------- ท้ายแผง: เพดาน context + สถานะ ---------- */
+
+.pb-foot {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 10px 18px;
+  border-top: 1px solid var(--pb-line);
+}
+/* flex-wrap สำคัญ: ตอนเกินเพดาน ข้อความเตือนโผล่เพิ่มแล้วไม่มีที่
+   ถ้าไม่ให้ wrap มันจะถูกบีบเหลือกว้าง 2-3 ตัวอักษรแล้วตัวหนังสือซ้อนกันมั่ว
+   (เห็นจาก screenshot ของ user — assert จับไม่ได้) */
+.pb-budget { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1; flex-wrap: wrap; }
+.pb-budget-bar {
+  width: 160px;
+  height: 5px;
+  flex: none;
+  border-radius: 3px;
+  background: #1B2229;
+  overflow: hidden;
+}
+.pb-budget-fill { display: block; height: 100%; width: 0; background: var(--pb-ok); }
+.pb-budget-fill[data-over="true"] { background: var(--pb-fail); }
+.pb-budget-text {
+  font-size: 11px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--pb-dim);
+  white-space: nowrap;
+}
+.pb-budget-warn {
+  flex: 1 0 100%;            /* ขึ้นบรรทัดใหม่เต็มความกว้าง ไม่ให้ถูกบีบซ้อนกับตัวเลข */
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--pb-fail);
+}
+
+.pb-status { margin: 0; font-size: 11px; color: var(--pb-dim); text-align: right; }
+.pb-status[data-kind="ok"]   { color: var(--pb-ok); }
+.pb-status[data-kind="fail"] { color: var(--pb-fail); }
+.pb-status[data-kind="busy"] { color: var(--pb-warn); }
+.pb-status[data-kind="warn"] { color: var(--pb-warn); }
+
+/* ---------- ป้ายที่ลอยตามเมาส์ตอนลาก ---------- */
+
+.pb-ghost {
+  position: fixed;
+  top: 0; left: 0;
+  z-index: 80;
+  padding: 4px 10px;
+  border: 1px solid var(--pb-claude);
+  border-radius: 999px;
+  background: var(--pb-panel);
+  color: var(--pb-claude);
+  font-size: 11px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* ---------- จอแคบ: วางซ้อนแทนสองคอลัมน์ (สายจะไม่ถูกวาด แต่ใช้งานได้ครบ) ---------- */
+
+@media (max-width: 860px) {
+  .pb-body { grid-template-columns: 1fr; overflow-y: auto; }
+  .pb-socket-wrap { border-left: none; border-top: 1px solid var(--pb-line); }
+  .pb-cables { display: none; }
+  .pb-job-input { width: 160px; }
+}

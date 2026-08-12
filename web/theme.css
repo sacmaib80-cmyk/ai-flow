@@ -1,0 +1,489 @@
+/* =========================================================================
+   theme.css — 🎨 เลนของ ANTIGRAVITY (Claude ไม่แตะไฟล์นี้อีกเลย)
+   ========================================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+
+:root {
+  --bg:        #0B0E11;
+  --panel:     #131820;
+  --line:      #222B36;
+  --ink:       #C9D3DE;
+  --ink-dim:   #6E7C8C;
+
+  --sig-claude:   #E8A33D;
+  --sig-gateway:  #43D9A3;
+  --sig-telegram: #4FB8E8;
+  --sig-anti:     #C77DD9;
+  --sig-cron:     #D9614C;
+  --sig-tasks:    #8FA3B8;
+  --sig-codex:    #3AB594;
+  --sig-vscode:   #3E9EE8;
+  --sig-copilot:  #8CDBE8;
+  --sig-mcp:      #F2AD63;
+  --sig-browser:  #99B8D1;
+  --sig-brain:    #E8E4D9;   /* สมองกลาง — ขาวอมครีม ต่างจากสายอื่นที่เป็นสีสัญญาณ */
+  /* สายข่าวเศรษฐกิจ — ชมพูแดง = โทนเตือนภัย แต่ไม่ชนแดงชาดของ cron (#D9614C)
+     ⚠️ Gemini เสนอ #E58E26 มาก่อน แต่วัดแล้ว ΔE=11.1 กับ --sig-claude = ชนกัน จึงไม่ใช้ */
+  --sig-news:     #E8607F;   /* news-alert — ΔE ห่างทุกสีเดิม >=26 · contrast 5.9:1 */
+  --sig-ffcal:    #C77E8E;   /* ปฏิทินข่าว — ตระกูลเดียวกันแต่จางกว่า (ข้อมูลดิบ) */
+  --dead:         #3A424D;
+
+  --mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  --ui: "Archivo Narrow", "Barlow Condensed", system-ui, sans-serif;
+}
+
+body { 
+  background: var(--bg); 
+  color: var(--ink); 
+  font-family: var(--mono); 
+  font-size: 12px; 
+  /* Patch bay background texture */
+  background-image: 
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 32px 32px;
+  background-position: -1px -1px;
+}
+
+/* สีประจำสาย */
+[data-ch="claude"]   { --sig: var(--sig-claude); }
+[data-ch="gateway"]  { --sig: var(--sig-gateway); }
+[data-ch="telegram"] { --sig: var(--sig-telegram); }
+[data-ch="anti"]     { --sig: var(--sig-anti); }
+[data-ch="cron"]     { --sig: var(--sig-cron); }
+[data-ch="tasks"]    { --sig: var(--sig-tasks); }
+[data-ch="codex"]    { --sig: var(--sig-codex); }
+[data-ch="vscode"]   { --sig: var(--sig-vscode); }
+[data-ch="copilot"]  { --sig: var(--sig-copilot); }
+[data-ch="mcp"]      { --sig: var(--sig-mcp); }
+[data-ch="browser"]  { --sig: var(--sig-browser); }
+[data-ch="brain"]    { --sig: var(--sig-brain); }
+[data-ch="news"]     { --sig: var(--sig-news); }
+[data-ch="ffcal"]    { --sig: var(--sig-ffcal); }
+/* ⚠️ ffcal วาดเป็น .waypoint ซึ่งใช้ attribute data-node ไม่ใช่ data-ch
+   ถ้าใส่แต่ [data-ch] สีจะไม่ติดเลย (เจอตอน verify: --sig ว่างเปล่า) */
+[data-node="ffcal"]  { --sig: var(--sig-ffcal); color: var(--sig-ffcal); border-color: color-mix(in srgb, var(--sig-ffcal) 40%, var(--line)); }
+
+/* เส้นความรู้ (brain → AI) วาดต่างจากเส้นงาน: เป็นจุดถี่ๆ ไหลช้าๆ สงบต่อเนื่อง */
+.wire[data-kind="knowledge"] { 
+  stroke-dasharray: 2 4; 
+  stroke-linecap: round; 
+  opacity: 0.7;
+  animation: knowledgeFlow 15s linear infinite;
+}
+
+/* เส้นที่ infer (brain -> anti) ให้ดูเป็นเส้นประชัดเจนกว่าเดิม ไม่ต่อเนื่องเท่าเส้นอื่น */
+.wire[data-kind="knowledge"][data-inferred="true"] { 
+  stroke-dasharray: 4 8; 
+  opacity: 0.35;
+  animation: knowledgeFlow 30s linear infinite;
+}
+
+@keyframes knowledgeFlow {
+  to { stroke-dashoffset: -100; }
+}
+
+/* ---- แถบบน ---- */
+.rig-bar { 
+  background: linear-gradient(to bottom, #171d26, var(--panel));
+  border-bottom: 2px solid #2a3542;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+  padding: 12px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+}
+.rig-bar::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+}
+.rig-name { 
+  font-family: var(--ui); 
+  font-size: 16px; 
+  font-weight: 700;
+  letter-spacing: .16em; 
+  color: var(--ink); 
+  text-transform: uppercase;
+}
+.rig-sub { color: var(--ink-dim); font-size: 11px; margin-left: 12px; border-left: 1px solid var(--line); padding-left: 12px; }
+.rig-count, .rig-clock { color: var(--ink-dim); font-size: 11px; margin-left: 16px;}
+.rig-count b { color: var(--ink); font-weight: bold; }
+.rig-count--dead b { color: var(--dead); }
+.rig-clock { 
+  font-variant-numeric: tabular-nums; 
+  font-weight: 700;
+  color: var(--sig-gateway);
+  background: rgba(0,0,0,0.3);
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+}
+.rig-dot { 
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%; 
+  background: var(--dead); 
+  margin-right: 8px;
+}
+.rig-dot[data-conn="on"] { 
+  background: var(--sig-gateway); 
+  box-shadow: 0 0 6px var(--sig-gateway);
+}
+
+/* ---- เส้นสาย (SIGNATURE) ---- */
+.wire {
+  fill: none;
+  stroke: var(--sig, var(--dead));
+  stroke-width: 1.5;
+  marker-end: url(#arrowHead);
+  transition-property: opacity, stroke-width;
+  transition-duration: 0.5s, 0.3s;
+  transition-timing-function: ease;
+}
+
+.wire[data-flow="flowing"] { 
+  opacity: 1; 
+  stroke-width: 2.5; 
+  filter: drop-shadow(0 0 5px var(--sig));
+}
+.wire[data-flow="quiet"] { 
+  /* decay based on age (0 to 1) */
+  opacity: calc(max(0.12, 0.7 - (var(--age, 1) * 0.58))); 
+}
+.wire[data-flow="error"] { 
+  stroke: var(--sig-cron); 
+  opacity: 0.9; 
+  stroke-dasharray: 6 4; 
+  filter: drop-shadow(0 0 4px var(--sig-cron));
+}
+.wire[data-flow="never"] { 
+  stroke: var(--dead); 
+  opacity: 0.15; 
+}
+.wire[data-inferred="true"]:not([data-kind="knowledge"]) { 
+  stroke-dasharray: 2 6; 
+}
+
+/* Fire animation when new data arrives */
+.wire.wire--fire {
+  animation: wireFlash 0.5s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
+}
+@keyframes wireFlash {
+  0% { stroke-width: 4; filter: drop-shadow(0 0 12px var(--sig)); opacity: 1; }
+  100% { stroke-width: 2.5; filter: drop-shadow(0 0 5px var(--sig)); opacity: 1; }
+}
+
+.pulse { 
+  fill: var(--sig, transparent); 
+  opacity: 0; 
+  filter: drop-shadow(0 0 8px var(--sig));
+}
+.pulse[data-flow="flowing"] { 
+  opacity: 1; 
+  animation: pulseRun 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite; 
+}
+
+@keyframes pulseRun {
+  0% { offset-distance: 0%; transform: scale(0.6); opacity: 0; }
+  15% { transform: scale(1.3); opacity: 1; }
+  85% { transform: scale(1.3); opacity: 1; }
+  100% { offset-distance: 100%; transform: scale(0.6); opacity: 0; }
+}
+
+/* ---- จุดแวะ + ป้ายขั้น + คำอธิบาย ---- */
+.waypoint { 
+  border: 1px dashed var(--line); 
+  background: repeating-linear-gradient(
+    -45deg,
+    rgba(19,24,32,0.9),
+    rgba(19,24,32,0.9) 10px,
+    rgba(22,28,38,0.9) 10px,
+    rgba(22,28,38,0.9) 20px
+  );
+  padding: 10px 14px;
+  border-radius: 2px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+.wp-name { 
+  font-family: var(--ui); 
+  color: var(--ink); 
+  font-size: 13px; 
+  font-weight: 700;
+  letter-spacing: .08em; 
+  text-transform: uppercase;
+}
+.wp-sub { color: var(--ink-dim); font-size: 10px; margin-top: 4px; }
+
+[data-node="you"] { border-style: solid; border-color: var(--sig-telegram); border-width: 2px; box-shadow: 0 4px 12px rgba(79, 184, 232, 0.15); }
+[data-node="repo"] { border-color: var(--sig-claude); border-width: 2px; box-shadow: 0 4px 12px rgba(232, 163, 61, 0.15); }
+[data-node="claudecli"] { border-color: var(--sig-gateway); border-width: 2px; box-shadow: 0 4px 12px rgba(67, 217, 163, 0.15); }
+[data-node="studio"] { border-color: var(--sig-mcp); border-width: 2px; box-shadow: 0 4px 12px rgba(242, 173, 99, 0.15); }
+[data-node="web"] { border-color: var(--sig-browser); border-width: 2px; box-shadow: 0 4px 12px rgba(153, 184, 209, 0.15); }
+
+.stage { 
+  font-family: var(--ui); 
+  font-size: 11px; 
+  font-weight: 700;
+  letter-spacing: .25em; 
+  color: var(--ink-dim); 
+  text-transform: uppercase;
+  background: var(--bg);
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  box-shadow: 2px 2px 0 rgba(0,0,0,0.6);
+  opacity: 0.8;
+}
+
+.legend {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  padding: 12px 16px;
+  gap: 16px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+.legend-item { color: var(--ink-dim); font-size: 11px; display: inline-flex; align-items: center; gap: 8px; margin-right: 16px; }
+.legend-item::before { content: ""; display: block; width: 18px; height: 0; border-top: 1.5px solid var(--ink-dim); }
+.legend-item[data-flow="flowing"]::before { border-top-color: var(--sig-gateway); border-top-width: 2.5px; box-shadow: 0 0 5px var(--sig-gateway); }
+.legend-item[data-flow="quiet"]::before { border-top-color: var(--ink-dim); opacity: .5; }
+.legend-item[data-flow="error"]::before { border-top-color: var(--sig-cron); border-top-style: dashed; }
+.legend-item[data-flow="never"]::before { border-top-color: var(--dead); opacity: 0.4; }
+.legend-item[data-inferred="true"]::before { border-top-style: dotted; }
+
+/* ---- โหนด ---- */
+.node {
+  border: 1px solid var(--line);
+  background: var(--panel);
+  border-left: 3px solid var(--sig, var(--dead));
+  padding: 10px;
+  transition-property: border-color, box-shadow, opacity, filter;
+  transition-duration: 0.2s;
+  transition-timing-function: ease;
+}
+
+/* data-tier visual weights */
+.node[data-tier="1"] {
+  border-width: 1px;
+  border-left-width: 4px;
+  box-shadow: 2px 2px 12px rgba(0,0,0,0.3);
+}
+.node[data-tier="1"][data-state="live"] {
+  box-shadow: 0 0 16px rgba(0,0,0,0.5), inset 2px 0 12px rgba(255,255,255,0.08);
+  filter: drop-shadow(0 0 4px var(--sig));
+}
+
+.node[data-tier="2"] {
+  border-width: 1px;
+  border-left-width: 3px;
+  box-shadow: 2px 2px 8px rgba(0,0,0,0.2);
+}
+.node[data-tier="2"][data-state="live"] {
+  box-shadow: 0 0 10px rgba(0,0,0,0.4), inset 2px 0 8px rgba(255,255,255,0.05);
+}
+
+.node[data-tier="3"] {
+  border-width: 1px;
+  border-left-width: 2px;
+  background: rgba(19,24,32, 0.4);
+  box-shadow: none !important;
+  opacity: 0.6;
+}
+.node[data-tier="3"]:hover, .node[data-tier="3"]:focus-visible {
+  opacity: 1;
+}
+.node[data-tier="3"] .node-name {
+  font-weight: 600;
+  color: var(--ink-dim);
+}
+.node[data-tier="3"] .node-icon {
+  opacity: 0.7;
+}
+
+/* state styling overrides */
+.node[data-state="dead"] { border-left-color: var(--dead); opacity: 0.45; }
+.node[data-state="idle"] { border-left-color: var(--sig); }
+.node[data-state="armed"] { border-left-color: var(--sig); border-style: dashed; border-left-style: solid; }
+.node[data-state="live"] { 
+  border-left-color: var(--sig); 
+  border-color: var(--sig);
+}
+.node:hover, .node:focus-visible { border-color: var(--sig, var(--line)); outline: none; box-shadow: 0 0 12px rgba(0,0,0,0.6); }
+
+.node-name { 
+  font-family: var(--ui); 
+  letter-spacing: .06em; 
+  color: var(--ink); 
+  font-weight: 700; 
+  font-size: 14px;
+  text-transform: uppercase;
+}
+.node-state { font-size: 10px; font-weight: bold; text-transform: uppercase; color: var(--sig, var(--ink-dim)); }
+.node[data-state="dead"] .node-state { color: var(--dead); }
+.node[data-state="armed"] .node-state { color: var(--ink); }
+.node-sub, .node-stat2, .node-age { color: var(--ink-dim); font-size: 10px; margin-top: 3px; }
+.node-stat { color: var(--ink); font-size: 12px; font-weight: bold; margin-top: 2px; }
+
+/* Icons injected via mask */
+.node-icon { 
+  width: 24px; 
+  height: 24px;
+  background-color: var(--sig, var(--dead));
+  mask-size: contain;
+  mask-position: center;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: contain;
+  -webkit-mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+}
+.node-icon[data-ch="claude"] { -webkit-mask-image: url("../assets/claude.svg"); mask-image: url("../assets/claude.svg"); }
+.node-icon[data-ch="gateway"] { -webkit-mask-image: url("../assets/gateway.svg"); mask-image: url("../assets/gateway.svg"); }
+.node-icon[data-ch="telegram"] { -webkit-mask-image: url("../assets/telegram.svg"); mask-image: url("../assets/telegram.svg"); }
+.node-icon[data-ch="anti"] { -webkit-mask-image: url("../assets/anti.svg"); mask-image: url("../assets/anti.svg"); }
+.node-icon[data-ch="cron"] { -webkit-mask-image: url("../assets/cron.svg"); mask-image: url("../assets/cron.svg"); }
+.node-icon[data-ch="tasks"] { -webkit-mask-image: url("../assets/tasks.svg"); mask-image: url("../assets/tasks.svg"); }
+.node-icon[data-ch="codex"] { -webkit-mask-image: url("../assets/codex.svg"); mask-image: url("../assets/codex.svg"); }
+.node-icon[data-ch="vscode"] { -webkit-mask-image: url("../assets/vscode.svg"); mask-image: url("../assets/vscode.svg"); }
+.node-icon[data-ch="copilot"] { -webkit-mask-image: url("../assets/copilot.svg"); mask-image: url("../assets/copilot.svg"); }
+.node-icon[data-ch="mcp"] { -webkit-mask-image: url("../assets/mcp.svg"); mask-image: url("../assets/mcp.svg"); }
+.node-icon[data-ch="browser"] { -webkit-mask-image: url("../assets/browser.svg"); mask-image: url("../assets/browser.svg"); }
+.node-icon[data-ch="brain"] { -webkit-mask-image: url("../assets/brain.svg"); mask-image: url("../assets/brain.svg"); }
+.node-icon[data-ch="news"] { -webkit-mask-image: url("../assets/news.svg"); mask-image: url("../assets/news.svg"); }
+.node-icon[data-ch="ffcal"] { -webkit-mask-image: url("../assets/ffcal.svg"); mask-image: url("../assets/ffcal.svg"); }
+
+.node[data-state="dead"] .node-icon { background-color: var(--dead); }
+
+/* ---- ไทม์ไลน์ ---- */
+.tape { 
+  border-left: 1px solid var(--line); 
+  background: var(--panel); 
+  padding: 0;
+  box-shadow: -4px 0 16px rgba(0,0,0,0.2);
+}
+.tape-head { 
+  font-family: var(--ui); 
+  font-weight: 700;
+  letter-spacing: .15em; 
+  color: var(--ink-dim); 
+  border-bottom: 2px solid var(--line); 
+  padding: 14px 16px;
+  text-transform: uppercase;
+  margin: 0;
+  font-size: 13px;
+  background: linear-gradient(to right, rgba(0,0,0,0.4), rgba(0,0,0,0.1));
+}
+.tape-list { margin: 0; padding: 12px; list-style: none; overflow-y: auto;}
+.tape-row { 
+  border-left: 3px solid var(--sig, var(--dead)); 
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+  background: rgba(0, 0, 0, 0.15);
+  margin-bottom: 6px;
+  border-radius: 0 4px 4px 0;
+  transition: background 0.2s ease;
+  font-family: var(--mono);
+}
+.tape-row:hover { background: rgba(0, 0, 0, 0.3); }
+.tape-time { color: var(--ink-dim); font-size: 10px; margin-bottom: 4px; font-weight: bold; }
+.tape-text { color: var(--ink); font-size: 11px; line-height: 1.5; font-family: var(--ui); }
+
+/* ---- แท็บ + ที่พัง + ภาระเครื่อง (starter — Antigravity ทับได้เต็มที่) ---- */
+.tape-tabs { border-bottom: 1px solid var(--line); background: var(--panel); padding: 8px 12px 0 12px;}
+.tape-tab {
+  background: transparent; border: 0;
+  border-bottom: 2px solid transparent;
+  color: var(--ink-dim);
+  font-family: var(--ui); font-size: 11px; letter-spacing: .1em;
+  text-transform: uppercase;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.tape-tab.is-on { color: var(--ink); border-bottom-color: var(--sig-gateway); background: rgba(255,255,255,0.03); }
+.tape-tab:hover { color: var(--ink); }
+.tab-badge { background: var(--sig-cron); color: #0B0E11; font-weight: 700; padding: 2px 6px; border-radius: 8px; margin-left: 6px;}
+
+.err-row { 
+  border-left: 3px solid var(--sig-cron); 
+  background: rgba(217, 97, 76, 0.08); 
+  padding: 8px 12px;
+  margin-bottom: 4px;
+  border-radius: 0 2px 2px 0;
+}
+.err-row[data-level="warn"] { 
+  border-left-color: var(--sig-claude); 
+  background: rgba(232, 163, 61, 0.08); 
+}
+.err-where { color: var(--sig-cron); font-size: 10px; letter-spacing: .04em; font-weight: bold; text-transform: uppercase; margin-bottom: 4px;}
+.err-row[data-level="warn"] .err-where { color: var(--sig-claude); }
+.err-count { color: var(--ink-dim); font-size: 10px; float: right; background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 2px; }
+.tape-empty { color: var(--ink-dim); font-size: 11px; padding: 12px;}
+
+.vitals { border-top: 1px solid var(--line); background: var(--panel); padding: 16px; box-shadow: inset 0 4px 12px rgba(0,0,0,0.2); }
+.vitals-head { font-family: var(--ui); letter-spacing: .12em; color: var(--ink-dim); text-transform: uppercase; margin-bottom: 8px;}
+.vital-k { color: var(--ink-dim); font-size: 10px; display: inline-block; width: 60px;}
+.vital-v { color: var(--ink); font-size: 11px; font-variant-numeric: tabular-nums; }
+.vital-bar { 
+  background: rgba(0,0,0,0.4); 
+  height: 8px; 
+  border-radius: 4px; 
+  border: 1px solid var(--line);
+  position: relative; 
+  overflow: hidden;
+  margin-top: 4px;
+  margin-bottom: 12px;
+}
+/* ชั้นล่าง = RAM ที่เครื่องใช้ทั้งหมด (ตรงกับ Task Manager) */
+.vital-fill { position: absolute; top: 0; left: 0; background: var(--ink-dim); height: 100%; opacity: .55; transition: width .4s ease; }
+.vital-fill[data-load="mid"]  { background: var(--sig-claude); opacity: .6; }
+.vital-fill[data-load="high"] { background: var(--sig-cron); opacity: .7; }
+/* ชั้นบน = เฉพาะส่วนที่เป็น AI (ทึบกว่า เห็นชัดว่าเป็นสัดส่วนเท่าไหร่) */
+.vital-fill--ai { 
+  position: absolute; top: 0; left: 0; height: 100%;
+  background: var(--sig-gateway); opacity: 1; box-shadow: 0 0 6px var(--sig-gateway); 
+}
+.vital-tools { margin: 0; padding-left: 16px;}
+.vital-tools li { color: var(--ink-dim); font-size: 10px; margin-bottom: 4px;}
+.vitals-head--sep { margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--line); }
+.run-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--sig-gateway); box-shadow: 0 0 5px var(--sig-gateway); margin-right: 6px;}
+.run-name { color: var(--ink); font-size: 11px; }
+.run-age { color: var(--ink-dim); font-size: 10px; font-variant-numeric: tabular-nums; float: right;}
+.run-empty { color: var(--ink-dim); font-size: 10px; }
+
+/* ---- แผงรายละเอียด ---- */
+.detail { 
+  background: var(--panel); 
+  border: 1px solid var(--line); 
+  border-top: 3px solid var(--sig, var(--line)); 
+  box-shadow: -6px 0 24px rgba(0,0,0,0.6);
+  padding: 20px;
+}
+.detail-title { font-family: var(--ui); font-weight: 700; font-size: 18px; color: var(--ink); text-transform: uppercase; margin-bottom: 6px; }
+.detail-sub { color: var(--ink-dim); font-size: 11px; margin-bottom: 20px;}
+.detail-stats { display: grid; grid-template-columns: auto 1fr; gap: 10px; margin-bottom: 20px; font-size: 12px; }
+.detail-stats dt { color: var(--ink-dim); text-align: right; padding-right: 12px; }
+.detail-stats dd { color: var(--ink); margin: 0; font-weight: bold; }
+.detail-feed { list-style: none; padding: 0; margin: 0; font-size: 11px; }
+.detail-feed li { color: var(--ink); padding: 6px 0; border-bottom: 1px dashed var(--line); }
+.detail-feed li[data-ok="false"] { color: var(--sig-cron); }
+.detail-close { 
+  background: rgba(255,255,255,0.05); border: 1px solid var(--line); color: var(--ink-dim); 
+  width: 28px; height: 28px;
+  cursor: pointer;
+  border-radius: 2px;
+  transition-property: background, color;
+  transition-duration: 0.2s;
+}
+.detail-close:hover { background: var(--line); color: var(--ink); }
+
+.conn-warn { background: var(--panel); border: 1px solid var(--sig-cron); color: var(--ink); padding: 10px 16px; font-weight: bold; }
+
+/* ---- a11y: ปิดการเคลื่อนไหว แต่ "ห้ามปิดสี" (สีคือข้อมูล) ---- */
+@media (prefers-reduced-motion: reduce) {
+  .pulse { animation: none !important; opacity: .85; transform: scale(1); filter: drop-shadow(0 0 2px var(--sig)); }
+  .wire.wire--fire { animation: none !important; stroke-width: 2.5; opacity: 1; filter: drop-shadow(0 0 4px var(--sig)); }
+  .wire[data-kind="knowledge"] { animation: none !important; }
+}

@@ -1,0 +1,30 @@
+{
+  "job": {
+    "title": "",
+    "brief": "สร้างเว็ปอะไรสวยๆให้หน่อย",
+    "skills": []
+  },
+  "agents": {
+    "claude": [],
+    "codex": [
+      "avoid-ai-design",
+      "frontend-design"
+    ],
+    "openclaw": [],
+    "antigravity": []
+  },
+  "roles": {
+    "claude": "",
+    "codex": "ทำเว็ปสวยๆ",
+    "openclaw": "",
+    "antigravity": ""
+  },
+  "order": {
+    "claude": 0,
+    "codex": 1,
+    "openclaw": 0,
+    "antigravity": 0
+  },
+  "lead": "",
+  "updatedAt": 1786461236057
+}

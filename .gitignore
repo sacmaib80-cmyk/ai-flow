@@ -1,0 +1,9 @@
+node_modules/
+dist/
+build/
+.gradle/
+*.apk
+*.keystore
+*.jks
+.env
+*.log
