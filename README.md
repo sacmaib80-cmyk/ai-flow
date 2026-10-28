@@ -30,6 +30,3 @@ Node.js · WebSocket · built-in `node:sqlite` · zero-dependency front end
 This is a single-user local tool, not a product — it binds to localhost only. One of the data
 sources shipped without the field the update loop expected, which silently froze live updates until
 I traced it; the fix also added a guard so one malformed source can't take the whole loop down again.
-
-⚠️ **Before publishing this screenshot, crop the right-hand column** — it shows local file paths and
-a bot handle.
